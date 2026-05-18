@@ -1,3 +1,6 @@
-from django.urls import path
+from django.urls import include, path
 
-urlpatterns: list = []
+
+urlpatterns = [
+    path("", include("gatewayapp.urls")),
+]

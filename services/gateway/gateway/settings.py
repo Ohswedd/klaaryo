@@ -13,7 +13,22 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
     "rest_framework",
+    "gatewayapp",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"json": {"()": "gatewayapp.logging_config.JsonLineFormatter"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "json"}},
+    "root": {"handlers": ["console"], "level": "INFO"},
+}
 
 MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
@@ -52,3 +67,5 @@ USE_I18N = False
 USE_TZ = True
 
 PUBSUB_PROJECT_ID = os.environ.get("PUBSUB_PROJECT_ID", "klaaryo-local")
+PUBSUB_TOPIC_RECEIVED = "candidate.received"
+PUBSUB_SUBSCRIPTION_ROUTED = "gateway.candidate-routed-sub"

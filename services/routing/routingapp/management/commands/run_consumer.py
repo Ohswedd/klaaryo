@@ -40,7 +40,7 @@ class Command(BaseCommand):
         future = subscriber.subscribe(sub_path, callback=callback)
 
         self.stdout.write(self.style.SUCCESS(
-            f"routing consumer subscribed to {settings.PUBSUB_SUBSCRIPTION_RECEIVED}"
+            f"Listening on subscription {settings.PUBSUB_SUBSCRIPTION_RECEIVED}"
         ))
 
         def _shutdown(signum, frame):

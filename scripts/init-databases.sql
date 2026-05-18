@@ -1,0 +1,3 @@
+CREATE DATABASE gateway_db;
+CREATE DATABASE routing_db;
+CREATE DATABASE config_db;

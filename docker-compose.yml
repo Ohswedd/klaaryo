@@ -1,0 +1,98 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: klaaryo
+      POSTGRES_PASSWORD: klaaryo
+      POSTGRES_DB: klaaryo
+    volumes:
+      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U klaaryo -d klaaryo"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 5s
+
+  pubsub-emulator:
+    image: google/cloud-sdk:emulators
+    command: >
+      gcloud beta emulators pubsub start
+      --host-port=0.0.0.0:8085
+      --project=klaaryo-local
+    ports:
+      - "8085:8085"
+
+  pubsub-init:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.pubsub-init
+    environment:
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      PUBSUB_PROJECT_ID: klaaryo-local
+    depends_on:
+      - pubsub-emulator
+    restart: "no"
+
+  config:
+    build:
+      context: ./services/config
+    environment:
+      DATABASE_URL: postgres://klaaryo:klaaryo@postgres:5432/config_db
+      DJANGO_SECRET_KEY: dev-insecure-key-change-me
+      GRPC_LISTEN_ADDR: "0.0.0.0:50051"
+    ports:
+      - "50051:50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: ./services/gateway
+    environment:
+      DATABASE_URL: postgres://klaaryo:klaaryo@postgres:5432/gateway_db
+      DJANGO_SECRET_KEY: dev-insecure-key-change-me
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      PUBSUB_PROJECT_ID: klaaryo-local
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pubsub-init:
+        condition: service_completed_successfully
+
+  gateway-consumer:
+    build:
+      context: ./services/gateway
+    command: python manage.py run_routed_consumer
+    environment:
+      DATABASE_URL: postgres://klaaryo:klaaryo@postgres:5432/gateway_db
+      DJANGO_SECRET_KEY: dev-insecure-key-change-me
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      PUBSUB_PROJECT_ID: klaaryo-local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pubsub-init:
+        condition: service_completed_successfully
+
+  routing:
+    build:
+      context: ./services/routing
+    environment:
+      DATABASE_URL: postgres://klaaryo:klaaryo@postgres:5432/routing_db
+      DJANGO_SECRET_KEY: dev-insecure-key-change-me
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      PUBSUB_PROJECT_ID: klaaryo-local
+      CONFIG_GRPC_ADDR: config:50051
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pubsub-init:
+        condition: service_completed_successfully
+      config:
+        condition: service_started

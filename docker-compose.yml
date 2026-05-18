@@ -38,7 +38,8 @@ services:
 
   config:
     build:
-      context: ./services/config
+      context: .
+      dockerfile: services/config/Dockerfile
     environment:
       DATABASE_URL: postgres://klaaryo:klaaryo@postgres:5432/config_db
       DJANGO_SECRET_KEY: dev-insecure-key-change-me

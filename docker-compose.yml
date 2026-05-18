@@ -91,7 +91,8 @@ services:
 
   routing:
     build:
-      context: ./services/routing
+      context: .
+      dockerfile: services/routing/Dockerfile
     environment:
       DATABASE_URL: postgres://klaaryo:klaaryo@postgres:5432/routing_db
       DJANGO_SECRET_KEY: dev-insecure-key-change-me

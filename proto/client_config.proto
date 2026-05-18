@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package klaaryo.config.v1;
+
+service ClientConfig {
+  // Returns the client's routing strategy and metadata.
+  // Used by routing-service before applying decision logic.
+  rpc GetClientRoutingRules(GetClientRoutingRulesRequest) returns (Client);
+
+  // Returns all locations for a client with current capacity and openings.
+  // Single call returns everything routing needs: avoids N+1 over openings.
+  rpc ListClientLocations(ListClientLocationsRequest) returns (ListClientLocationsResponse);
+}
+
+message GetClientRoutingRulesRequest {
+  string client_id = 1;
+}
+
+message Client {
+  string id = 1;
+  string name = 2;
+  string routing_strategy = 3; // 'nearest_city' | 'round_robin' | 'priority_based'
+}
+
+message ListClientLocationsRequest {
+  string client_id = 1;
+}
+
+message Location {
+  string id = 1;
+  string client_id = 2;
+  string name = 3;
+  string city = 4;
+  int32 max_capacity = 5;
+  int32 current_load = 6;
+  int32 priority = 7;
+  repeated string open_roles = 8; // denormalized from LocationOpening for single-call efficiency
+}
+
+message ListClientLocationsResponse {
+  repeated Location locations = 1;
+}

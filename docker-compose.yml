@@ -65,11 +65,17 @@ services:
         condition: service_healthy
       pubsub-init:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   gateway-consumer:
     build:
       context: ./services/gateway
-    command: python manage.py run_routed_consumer
+    command: sh -c "python manage.py run_routed_consumer"
     environment:
       DATABASE_URL: postgres://klaaryo:klaaryo@postgres:5432/gateway_db
       DJANGO_SECRET_KEY: dev-insecure-key-change-me
@@ -80,6 +86,8 @@ services:
         condition: service_healthy
       pubsub-init:
         condition: service_completed_successfully
+      gateway:
+        condition: service_healthy
 
   routing:
     build:

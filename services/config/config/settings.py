@@ -11,6 +11,7 @@ ALLOWED_HOSTS = ["*"]
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
+    "configapp",
 ]
 
 _db = urlparse(os.environ["DATABASE_URL"])

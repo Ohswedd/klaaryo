@@ -44,10 +44,13 @@ def get_client_routing_rules(client_id, timeout=2.0):
 
 def list_client_locations(client_id, timeout=2.0):
     try:
-        return _stub().ListClientLocations(
+        response = _stub().ListClientLocations(
             client_config_pb2.ListClientLocationsRequest(client_id=client_id),
             timeout=timeout,
         )
+        # Unwrap the proto repeated field here so business code stays decoupled
+        # from the gRPC wire format.
+        return response.locations
     except grpc.RpcError as e:
         logger.warning(
             f"ListClientLocations({client_id}) failed: {e.code()}: {e.details()}"

@@ -20,9 +20,12 @@ logger = logging.getLogger(__name__)
 def handle_candidate_received(payload):
     event_id = payload['event_id']
 
-    # at-least-once Pub/Sub semantics require event-level dedup
+    # at-least-once Pub/Sub semantics require event-level dedup.
+    # atomic() isolates the failing INSERT so an IntegrityError doesn't poison
+    # an outer transaction (canonical Django try-INSERT-catch-dup pattern).
     try:
-        ProcessedEvent.objects.create(event_id=event_id)
+        with transaction.atomic():
+            ProcessedEvent.objects.create(event_id=event_id)
     except IntegrityError:
         logger.info("duplicate event_id %s, skipping", event_id)
         return

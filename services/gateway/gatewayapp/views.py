@@ -48,7 +48,15 @@ class CandidateDetailView(APIView):
         return Response(CandidateOutputSerializer(candidate).data)
 
 
-class HealthView(APIView):
+class HealthLiveView(APIView):
+    # Process-level liveness: no DB or external calls. Cheap to poll.
+    def get(self, request):
+        return Response({"status": "ok"})
+
+
+class HealthReadyView(APIView):
+    # Readiness: validates DB reachability. Used by docker-compose healthcheck
+    # and gateway-consumer.depends_on (service_healthy gate).
     def get(self, request):
         try:
             Candidate.objects.exists()
